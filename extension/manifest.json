@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "URL Chat Extension",
+  "version": "1.0",
+  "description": "Chat with other users on the same URL in real-time.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
