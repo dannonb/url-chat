@@ -26,6 +26,11 @@ type Message struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
+type UserCountMessage struct {
+	Type      string `json:"type"`
+	UserCount int    `json:"user_count"`
+}
+
 var (
 	rooms = make(map[string][]*Client)
 	mu    sync.Mutex
@@ -38,16 +43,13 @@ var upgrader = websocket.Upgrader{
 }
 
 func normalizeRoom(url string) string {
-	if strings.HasSuffix(url, "/") {
-		url = strings.TrimSuffix(url, "/")
-	}
+	url = strings.TrimSuffix(url, "/")
 	return url
 }
 
 func saveMessage(room string, msg Message) {
 	data, _ := json.Marshal(msg)
 	rdb.RPush(ctx, "room:"+room, data)
-	// Optional: trim list to last 100 messages
 	rdb.LTrim(ctx, "room:"+room, -100, -1)
 }
 
@@ -84,6 +86,9 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 		client.conn.WriteMessage(websocket.TextMessage, data)
 	}
 
+	// Broadcast user count update to all clients in room
+	broadcastUserCount(room)
+
 	defer func() {
 		mu.Lock()
 		for i, c := range rooms[room] {
@@ -94,6 +99,8 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 		}
 		mu.Unlock()
 		conn.Close()
+		// Broadcast updated user count when user leaves
+		broadcastUserCount(room)
 	}()
 
 	for {
@@ -119,6 +126,23 @@ func broadcast(room string, msg Message, sender *Client) {
 		if client != sender {
 			client.conn.WriteMessage(websocket.TextMessage, data)
 		}
+	}
+}
+
+func broadcastUserCount(room string) {
+	mu.Lock()
+	userCount := len(rooms[room])
+	clients := rooms[room]
+	mu.Unlock()
+
+	countMsg := UserCountMessage{
+		Type:      "user_count",
+		UserCount: userCount,
+	}
+	data, _ := json.Marshal(countMsg)
+
+	for _, client := range clients {
+		client.conn.WriteMessage(websocket.TextMessage, data)
 	}
 }
 
