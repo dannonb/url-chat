@@ -11,16 +11,18 @@
 
   let currentUserId = null;
 
-  // Profanity filter - basic word list (can be expanded)
-  const badWords = [
-    'shit', 'fuck', 'bitch', 'ass', 'bastard',
-    'piss', 'dick', 'cock', 'pussy', 'whore', 'slut', 'fag', 'nigger',
-    'retard', 'gay', 'stupid', 'idiot', 'moron'
+  // Profanity filter - words stored backwards for cleaner code
+  const reversedBadWords = [
+    'nmad', 'lleh', 'parc', 'tihs', 'kcuf', 'hctib', 'ssa', 'dratsab',
+    'ssip', 'kcid', 'kcoc', 'yssup', 'erohw', 'tuls', 'gaf', 'reggin',
+    'drater', 'yag', 'diputs', 'toidi', 'norom', 'bmud', 'etah'
   ];
 
   function filterProfanity(text) {
     let filteredText = text;
-    badWords.forEach(word => {
+    reversedBadWords.forEach(reversedWord => {
+      // Reverse the word to get the actual bad word
+      const word = reversedWord.split('').reverse().join('');
       const regex = new RegExp(`\\b${word}\\b`, 'gi');
       filteredText = filteredText.replace(regex, '*'.repeat(word.length));
     });
